@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon Lecteur Musical</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .player-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .track-info {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .track-title {
+            font-size: 2em;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .track-artist {
+            font-size: 1.2em;
+            opacity: 0.8;
+        }
+
+        .audio-controls {
+            margin-bottom: 30px;
+        }
+
+        audio {
+            width: 100%;
+            height: 60px;
+            border-radius: 10px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            color: white;
+            font-size: 1.5em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        .lyrics-section {
+            margin-top: 30px;
+        }
+
+        .lyrics-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .lyrics-toggle h3 {
+            font-size: 1.5em;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 60px;
+            height: 30px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-switch.active {
+            background: #4CAF50;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-switch.active .toggle-slider {
+            transform: translateX(30px);
+        }
+
+        .lyrics-container {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            height: 300px;
+            overflow: hidden;
+            position: relative;
+            display: none;
+        }
+
+        .lyrics-container.show {
+            display: block;
+        }
+
+        .lyrics-scroll {
+            position: absolute;
+            width: 100%;
+            animation: scrollLyrics 30s linear infinite;
+            animation-play-state: paused;
+        }
+
+        .lyrics-scroll.playing {
+            animation-play-state: running;
+        }
+
+        .lyrics-line {
+            padding: 10px 0;
+            font-size: 1.1em;
+            line-height: 1.6;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .lyrics-line.current {
+            color: #FFD700;
+            font-weight: bold;
+            transform: scale(1.1);
+        }
+
+        @keyframes scrollLyrics {
+            0% { transform: translateY(300px); }
+            100% { transform: translateY(-100%); }
+        }
+
+        .playlist {
+            margin-top: 30px;
+        }
+
+        .playlist h3 {
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .playlist-item {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .playlist-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(5px);
+        }
+
+        .playlist-item.active {
+            background: rgba(255, 215, 0, 0.3);
+            border-left: 4px solid #FFD700;
+        }
+
+        .add-song-form {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            font-size: 1em;
+        }
+
+        .form-group textarea {
+            height: 120px;
+            resize: vertical;
+        }
+
+        .add-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .add-btn:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .track-title {
+                font-size: 1.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎵 Mon Lecteur Musical</h1>
+            <p>Écouter avec les paroles synchronisées</p>
+        </div>
+
+        <div class="player-container">
+            <div class="track-info">
+                <div class="track-title" id="trackTitle">Mental 13</div>
+                <div class="track-artist" id="trackArtist">Nekfeu</div>
+            </div>
+
+            <div class="audio-controls">
+                <audio id="audioPlayer" controls>
+                    <source src="" type="audio/mpeg">
+                    Votre navigateur ne supporte pas l'élément audio.
+                </audio>
+            </div>
+
+            <div class="lyrics-section">
+                <div class="lyrics-toggle">
+                    <h3>Paroles</h3>
+                    <div class="toggle-switch" id="lyricsToggle">
+                        <div class="toggle-slider"></div>
+                    </div>
+                </div>
+                
+                <div class="lyrics-container" id="lyricsContainer">
+                    <div class="lyrics-scroll" id="lyricsScroll">
+                        <div class="lyrics-line">🎵 Paroles de démonstration 🎵</div>
+                        <div class="lyrics-line">Cette chanson est un exemple</div>
+                        <div class="lyrics-line">Mental 13 - Version démo</div>
+                        <div class="lyrics-line">Les paroles défilent automatiquement</div>
+                        <div class="lyrics-line">Quand la musique joue</div>
+                        <div class="lyrics-line">Vous pouvez ajouter vos propres chansons</div>
+                        <div class="lyrics-line">Avec leurs paroles personnalisées</div>
+                        <div class="lyrics-line">Profitez de votre musique préférée</div>
+                        <div class="lyrics-line">Avec un affichage synchronisé</div>
+                        <div class="lyrics-line">🎵 Fin de la démonstration 🎵</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="playlist">
+            <h3>🎵 Playlist</h3>
+            <div id="playlistContainer">
+                <div class="playlist-item active" data-song="0">
+                    <div>
+                        <strong>Mental 13</strong><br>
+                        <small>Nekfeu</small>
+                    </div>
+                    <span>3:45</span>
+                </div>
+                <div class="playlist-item" data-song="1">
+                    <div>
+                        <strong>Ma Chanson 2</strong><br>
+                        <small>Mon Artiste</small>
+                    </div>
+                    <span>4:12</span>
+                </div>
+                <div class="playlist-item" data-song="2">
+                    <div>
+                        <strong>Ma Chanson 3</strong><br>
+                        <small>Mon Artiste</small>
+                    </div>
+                    <span>3:28</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let songs = [
+            {
+                title: "Mental 13",
+                artist: "Nekfeu",
+                url: "./mental13.mp3", // Mettez votre fichier MP3 dans le même dossier
+                lyrics: [
+                    "🎵 Mental 13 - Nekfeu 🎵",
+                    "Remplacez ces lignes par",
+                    "Les vraies paroles de Mental 13",
+                    "Une ligne = une phrase",
+                    "Les paroles défileront automatiquement",
+                    "Quand la musique joue",
+                    "Modifiez dans le code JavaScript",
+                    "Section 'lyrics' de cette chanson",
+                    "🎵 Bonne écoute ! 🎵"
+                ]
+            },
+            {
+                title: "Ma Chanson 2",
+                artist: "Mon Artiste",
+                url: "./chanson2.mp3", // Ajoutez d'autres fichiers MP3
+                lyrics: [
+                    "🎵 Deuxième chanson 🎵",
+                    "Mettez votre deuxième fichier MP3",
+                    "Dans le même dossier",
+                    "Et changez le nom ici",
+                    "🎵 Profitez ! 🎵"
+                ]
+            },
+            {
+                title: "Ma Chanson 3",
+                artist: "Mon Artiste",
+                url: "./chanson3.mp3", // Troisième fichier
+                lyrics: [
+                    "🎵 Troisième titre 🎵",
+                    "Ajoutez autant de chansons",
+                    "Que vous voulez",
+                    "Il suffit de copier cette structure",
+                    "🎵 Fin 🎵"
+                ]
+            }
+        ];
+
+        let currentSongIndex = 0;
+        let lyricsVisible = false;
+        let currentLyricIndex = 0;
+
+        const audioPlayer = document.getElementById('audioPlayer');
+        const lyricsToggle = document.getElementById('lyricsToggle');
+        const lyricsContainer = document.getElementById('lyricsContainer');
+        const lyricsScroll = document.getElementById('lyricsScroll');
+
+        // Toggle des paroles
+        lyricsToggle.addEventListener('click', function() {
+            lyricsVisible = !lyricsVisible;
+            this.classList.toggle('active');
+            lyricsContainer.classList.toggle('show');
+        });
+
+        // Événements audio
+        audioPlayer.addEventListener('play', function() {
+            if (lyricsVisible) {
+                lyricsScroll.classList.add('playing');
+                startLyricsSync();
+            }
+        });
+
+        audioPlayer.addEventListener('pause', function() {
+            lyricsScroll.classList.remove('playing');
+        });
+
+        // Synchronisation des paroles
+        function startLyricsSync() {
+            const lines = document.querySelectorAll('.lyrics-line');
+            const duration = audioPlayer.duration || 30; // durée par défaut
+            const intervalTime = (duration * 1000) / lines.length;
+
+            currentLyricIndex = 0;
+            
+            const syncInterval = setInterval(() => {
+                if (audioPlayer.paused || currentLyricIndex >= lines.length) {
+                    clearInterval(syncInterval);
+                    return;
+                }
+
+                // Retirer la classe current de toutes les lignes
+                lines.forEach(line => line.classList.remove('current'));
+                
+                // Ajouter la classe current à la ligne actuelle
+                if (lines[currentLyricIndex]) {
+                    lines[currentLyricIndex].classList.add('current');
+                }
+                
+                currentLyricIndex++;
+            }, intervalTime);
+        }
+
+        // Charger une chanson
+        function loadSong(index) {
+            const song = songs[index];
+            if (!song) return;
+
+            currentSongIndex = index;
+            
+            document.getElementById('trackTitle').textContent = song.title;
+            document.getElementById('trackArtist').textContent = song.artist;
+            
+            // Charger le fichier audio
+            if (song.url) {
+                audioPlayer.src = song.url;
+            }
+
+            // Mettre à jour les paroles
+            lyricsScroll.innerHTML = song.lyrics.map(line => 
+                `<div class="lyrics-line">${line}</div>`
+            ).join('');
+
+            // Mettre à jour la playlist
+            updatePlaylistDisplay();
+        }
+
+        // Mettre à jour l'affichage de la playlist
+        function updatePlaylistDisplay() {
+            const playlistItems = document.querySelectorAll('.playlist-item');
+            playlistItems.forEach((item, index) => {
+                item.classList.toggle('active', index === currentSongIndex);
+            });
+        }
+
+        // Événements de clic sur la playlist
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.playlist-item')) {
+                const songIndex = parseInt(e.target.closest('.playlist-item').getAttribute('data-song'));
+                loadSong(songIndex);
+            }
+        });
+
+        // Initialiser
+        loadSong(0);
+    </script>
+</body>
+</html>
